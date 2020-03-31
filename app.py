@@ -1,12 +1,9 @@
 from flask import Flask,render_template,url_for,request
 import pandas as pd 
 import pickle
-import string
-#import re
 import pandas as pd
 import numpy as np
-#from sklearn.feature_extraction.text import CountVectorizer
-from sklearn.metrics.pairwise import cosine_similarity
+
 from nltk.tokenize import word_tokenize
 def token(text):
     tokenized_word=word_tokenize(text)
@@ -28,7 +25,7 @@ with open('tfidf3.pkl', 'rb') as f:
         tfidf = pickle.load(f) #create tfidf model of the corpus
 
 with open('dictionary3.pkl', 'rb') as f:
-    dictionary = pickle.load(f)
+        dictionary = pickle.load(f)
 
 with open('tfidfcorpus3.pkl', 'rb') as f:
         tfidfcorpus = pickle.load(f) 
