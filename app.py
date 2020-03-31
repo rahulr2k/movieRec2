@@ -17,8 +17,6 @@ movies.originalTitle  = movies.originalTitle.astype(str).apply(lambda x : x.repl
 titlelist = movies.originalTitle.values.tolist()
 
 
-from gensim.corpora.dictionary import Dictionary
-from gensim.models.tfidfmodel import TfidfModel
 
 with open('tfidf3.pkl', 'rb') as f:
         tfidf = pickle.load(f) #create tfidf model of the corpus
@@ -30,12 +28,6 @@ with open('tfidfcorpus3.pkl', 'rb') as f:
         tfidfcorpus = pickle.load(f) 
 
  
-        #create corpus where the corpus is a bag of words for each document
-corpus = [dictionary.doc2bow(doc) for doc in processed_keywords] 
-
-from gensim.similarities import MatrixSimilarity
-        # Create the similarity data structure. This is the most important part where we get the similarities between the movies.
-sims = MatrixSimilarity(tfidfcorpus, num_features=len(dictionary))  
 
 print("similarity generation completed")
 
