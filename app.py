@@ -11,12 +11,37 @@ from nltk.tokenize import word_tokenize
 def token(text):
     tokenized_word=word_tokenize(text)
     return tokenized_word
-movies = pd.read_csv('moviesprocessed.csv')
+movies = pd.read_csv('MPR.csv')
+print("tokenization started")
 movies.keywords = movies.keywords.astype(str).apply(token)
+print("tokenization completed , starting similarity engine")
 processed_keywords = movies.keywords
 
-movies.primaryTitle  = movies.primaryTitle.astype(str).apply(lambda x : x.replace("'", ''))
-titlelist = movies.primaryTitle.values.tolist()
+movies.originalTitle  = movies.originalTitle.astype(str).apply(lambda x : x.replace("'", ''))
+titlelist = movies.originalTitle.values.tolist()
+
+
+from gensim.corpora.dictionary import Dictionary
+from gensim.models.tfidfmodel import TfidfModel
+
+with open('tfidf3.pkl', 'rb') as f:
+        tfidf = pickle.load(f) #create tfidf model of the corpus
+
+with open('dictionary3.pkl', 'rb') as f:
+    dictionary = pickle.load(f)
+
+with open('tfidfcorpus3.pkl', 'rb') as f:
+        tfidfcorpus = pickle.load(f) 
+
+ 
+        #create corpus where the corpus is a bag of words for each document
+corpus = [dictionary.doc2bow(doc) for doc in processed_keywords] 
+
+from gensim.similarities import MatrixSimilarity
+        # Create the similarity data structure. This is the most important part where we get the similarities between the movies.
+sims = MatrixSimilarity(tfidfcorpus, num_features=len(dictionary))  
+
+print("similarity generation completed")
 
 app = Flask(__name__)
  
@@ -39,9 +64,9 @@ def predict():
         ###### helper functions. Use them when needed #######
         
         def get_poster_from_index(index):
-            return movies[movies.primaryTitle == index]["poster"].values[0]
+            return movies[movies.originalTitle == index]["poster"].values[0]
         def get_url_from_index(index):
-            return movies[movies.primaryTitle == index]["URL"].values[0]
+            return movies[movies.originalTitle == index]["URL"].values[0]
 
         
 
@@ -57,13 +82,13 @@ def predict():
         from gensim.corpora.dictionary import Dictionary
         from gensim.models.tfidfmodel import TfidfModel
 
-        with open('tfidf2.pkl', 'rb') as f:
+        with open('tfidf3.pkl', 'rb') as f:
              tfidf = pickle.load(f) #create tfidf model of the corpus
 
-        with open('dictionary2.pkl', 'rb') as f:
+        with open('dictionary3.pkl', 'rb') as f:
             dictionary = pickle.load(f)
 
-        with open('tfidfcorpus2.pkl', 'rb') as f:
+        with open('tfidfcorpus3.pkl', 'rb') as f:
              tfidfcorpus = pickle.load(f) 
 
  
@@ -77,7 +102,7 @@ def predict():
 
         movie_title = message
         number_of_hits=5
-        movie = movies.loc[movies.primaryTitle==movie_title] # get the movie row
+        movie = movies.loc[movies.originalTitle==movie_title] # get the movie row
         keywords = movie.keywords.iloc[0] #get the keywords as a Series (movie['keywords']),
         # get just the keywords string ([0]), and then convert to a list of keywords (.split(',') )
         query_doc = keywords #set the query_doc to the list of keywords
@@ -87,7 +112,7 @@ def predict():
 
         similarity_array = sims[query_doc_tfidf] # get the array of similarity values between our movie and every other movie. 
             #So the length is the number of movies we have. To do this, we pass our list of tf-idf tuples to sims.
-        similarity_series = pd.Series(similarity_array.tolist(), index=movies.primaryTitle.values) #Convert to a Series
+        similarity_series = pd.Series(similarity_array.tolist(), index=movies.originalTitle.values) #Convert to a Series
         top_hits = similarity_series.sort_values(ascending=False)[1:number_of_hits+1] 
             #get the top matching results, i.e. most similar movies; start from index 1 because every movie is most similar to itself
 
